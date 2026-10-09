@@ -19,7 +19,12 @@ Die Schriften kommen von Google Fonts. Ohne Internet nimmt der Browser Ersatzsch
 - **Wiedererkennung:** Farbleiste aus den acht Logofarben, gleiche Trennlinien, Logo immer unten rechts.
 - **Feinschliff:** Schriftarten, Titelstärke, Größen, Zeilenabstand, Rand, Abstände, Bildhöhe, Ausrichtung, Logo-Variante und -Größe.
 - **Passt automatisch:** Wird der Text zu lang, verkleinert das Tool die Schrift und sagt unter der Vorschau, um wie viel.
+- **Auswahl statt Tippen:** Für die Dachzeile (Buchvorstellung, Lesung, Konzert, DIY-Abend …) und die Fußzeile (Eintritt frei, Spenden willkommen …) gibt es Chips zum Antippen. Eigene Einträge lassen sich hinzufügen, Standardeinträge ausblenden.
 - **Caption kopieren:** fasst Titel, Datum, Beschreibung und Fußzeile als Text für die Bildunterschrift zusammen.
+
+## Listen für alle ändern
+
+Eigene Kategorien und Bausteine speichert jedes Gerät für sich. Sollen sie für alle gelten, gehören sie in die Standardlisten: In `index.html` nach `const PRESETS` suchen und die Einträge bei `dach` (Dachzeile) oder `fuss` (Fußzeile) ergänzen.
 
 ## Speichern
 

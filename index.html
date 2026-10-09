@@ -46,8 +46,8 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html,body{background:var(--paper)}
-body{margin:0;color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
+html,body{height:100%;background:var(--paper)}
+body{margin:0;overflow:hidden;color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45}
 button,input,select,textarea{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
@@ -55,14 +55,16 @@ button,input,select,textarea{font:inherit;color:inherit}
 .brandbar{height:8px;background:linear-gradient(100deg,
   var(--b-gruen) 0 12.5%, var(--b-gelb) 12.5% 25%, var(--b-orange) 25% 37.5%, var(--b-hellblau) 37.5% 50%,
   var(--b-dunkelblau) 50% 62.5%, var(--b-lila) 62.5% 75%, var(--b-creme) 75% 87.5%, var(--b-rot) 87.5% 100%)}
-.mast-inner{display:flex;align-items:center;gap:12px;padding:14px 16px;max-width:1280px;margin:0 auto}
+.mast-inner{display:none;align-items:center;gap:12px;padding:12px 24px}
 .mast-logo{width:40px;height:auto;display:block;filter:var(--logo-filter)}
 .mast-inner h1{margin:0;font-size:24px;line-height:1;font-weight:800;font-stretch:72%;text-transform:uppercase;letter-spacing:.01em}
 .mast-inner p{margin:3px 0 0;color:var(--muted);font-size:13px}
 
-.app{display:grid;max-width:1280px;margin:0 auto;padding-inline:16px;padding-block:0 56px}
-.stage{display:grid;gap:8px;align-content:start}
-.canvas-wrap{display:flex;align-items:center;justify-content:center;background:var(--stage);border-radius:10px;padding:12px;height:min(40vh,440px);position:relative}
+.shell{height:100%;display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr);grid-template-areas:"head" "stage" "controls"}
+.masthead{grid-area:head}
+.stage{grid-area:stage;min-width:0;display:grid;gap:6px;align-content:start;padding:8px 16px 10px;border-bottom:1px solid var(--rule);background:var(--paper)}
+.controls{grid-area:controls;min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-inline:16px;padding-block:0 56px}
+.canvas-wrap{display:flex;align-items:center;justify-content:center;background:var(--stage);border-radius:10px;padding:8px;height:min(32vh,360px);position:relative}
 .canvas-wrap canvas{display:block;max-width:100%;max-height:100%;width:auto;height:auto;box-shadow:var(--shadow);border-radius:2px;touch-action:auto}
 .canvas-wrap.can-drag canvas{cursor:grab}
 .canvas-wrap.panning canvas{touch-action:none;outline:2px dashed var(--accent);outline-offset:4px}
@@ -137,6 +139,15 @@ select{appearance:auto}
 .file-row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
 .file-name{font-size:14px;color:var(--muted);min-width:0;overflow-wrap:anywhere}
 
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip-btn{min-height:36px;padding:6px 12px;border:1px solid var(--rule);border-radius:999px;background:var(--surface);font-size:13.5px;font-weight:600;line-height:1.2;cursor:pointer;text-align:left}
+.chip-btn[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.chip-btn.add{border-style:dashed;color:var(--muted)}
+.chips.editing .chip-btn.item::after{content:"×";margin-left:8px;font-weight:800;color:var(--bad)}
+.chips.editing .chip-btn.item{border-color:var(--bad)}
+.chip-tool{border:0;background:none;padding:6px 4px;min-height:36px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.chip-form{display:flex;flex-wrap:wrap;gap:6px;width:100%}
+.chip-form input{flex:1 1 180px}
 .range{display:grid;gap:2px}
 .range-head{display:flex;justify-content:space-between;align-items:baseline;font-size:13px;font-weight:600}
 .range output{font-variant-numeric:tabular-nums;color:var(--muted);font-weight:500}
@@ -152,10 +163,8 @@ select{appearance:auto}
 
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:60;background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:var(--shadow);max-width:calc(100% - 32px);text-align:center}
 
-/* Handy: Vorschau klebt oben, beim Tippen wird sie klein */
+/* Handy: Vorschau steht oben fest, nur die Einstellungen scrollen; beim Tippen wird sie klein */
 @media (max-width: 899px){
-  .stage{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--paper);margin-inline:-16px;padding:8px 16px 10px;gap:6px;border-bottom:1px solid var(--rule)}
-  .canvas-wrap{height:min(34vh,380px);padding:8px}
   .dims{display:none}
   .chip{font-size:12.5px}
   .stage-actions .btn{min-height:40px;padding:8px 12px;font-size:13.5px}
@@ -166,10 +175,11 @@ select{appearance:auto}
 }
 @media (min-width: 600px){ .tpl small{display:block} }
 @media (min-width: 900px){
-  .app{grid-template-columns:minmax(0,1fr) 400px;gap:36px;padding-inline:24px}
-  .stage{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px);padding-top:4px}
-  .canvas-wrap{height:calc(100vh - 210px);min-height:440px;padding:24px}
-  .controls .group:first-child{border-top:0;padding-top:4px}
+  .shell{grid-template-columns:minmax(0,1fr) minmax(360px,420px);grid-template-rows:auto minmax(0,1fr);grid-template-areas:"head head" "stage controls"}
+  .mast-inner{display:flex}
+  .stage{min-height:0;grid-template-rows:minmax(0,1fr) auto auto;gap:10px;padding:4px 24px 24px;border-bottom:0}
+  .canvas-wrap{height:auto;min-height:0;padding:24px}
+  .controls{padding-inline:24px;border-left:1px solid var(--rule)}
 }
 @media (prefers-reduced-motion: no-preference){
   .btn,.seg button,.tpl,.sw-face{transition:background-color .15s,border-color .15s,color .15s}
@@ -178,6 +188,7 @@ select{appearance:auto}
 </head>
 <body>
 
+<div class="shell">
 <header class="masthead">
   <div class="brandbar" aria-hidden="true"></div>
   <div class="mast-inner">
@@ -189,7 +200,6 @@ select{appearance:auto}
   </div>
 </header>
 
-<main class="app">
   <section class="stage" id="stage" aria-label="Vorschau">
     <div class="canvas-wrap" id="canvasWrap">
       <canvas id="preview" width="1080" height="1350" role="img" aria-label="Vorschau des Posts"></canvas>
@@ -205,7 +215,7 @@ select{appearance:auto}
     </div>
   </section>
 
-  <section class="controls" aria-label="Einstellungen">
+  <main class="controls" aria-label="Einstellungen">
     <div class="group">
       <h2>Vorlage</h2>
       <div class="tpls" id="tpls" role="radiogroup" aria-label="Vorlage"></div>
@@ -252,7 +262,11 @@ select{appearance:auto}
     <div class="group">
       <h2>Inhalt</h2>
       <p class="hint">Leere Felder fallen im Bild weg. Zeilenumbrüche bleiben erhalten, eine Leerzeile setzt einen Absatz.</p>
-      <label class="field"><span>Dachzeile</span><input type="text" id="dach" data-k="dach" placeholder="z. B. Lesung, Konzert, Buchvorstellung"></label>
+      <div class="field">
+        <label for="dach">Dachzeile</label>
+        <input type="text" id="dach" data-k="dach" placeholder="Art der Veranstaltung">
+        <div class="chips" data-chips="dach" role="group" aria-label="Veranstaltungsart wählen"></div>
+      </div>
       <label class="field"><span>Titel</span><input type="text" id="titel" data-k="titel" placeholder="Name der Veranstaltung"></label>
       <label class="field"><span>Untertitel</span><input type="text" id="unter" data-k="unter" placeholder="z. B. mit Tanja Kubes"></label>
       <div class="field">
@@ -266,7 +280,12 @@ select{appearance:auto}
       </div>
       <label class="field"><span>Beschreibung</span><textarea id="text" data-k="text" rows="5"></textarea></label>
       <label class="check"><input type="checkbox" id="showText"> Beschreibung in dieser Vorlage zeigen</label>
-      <label class="field"><span>Fußzeile</span><textarea id="fuss" data-k="fuss" rows="2"></textarea></label>
+      <div class="field">
+        <label for="fuss">Fußzeile</label>
+        <textarea id="fuss" data-k="fuss" rows="2"></textarea>
+        <div class="chips" data-chips="fuss" role="group" aria-label="Bausteine für die Fußzeile"></div>
+        <p class="hint">Bausteine antippen fügt sie hinzu, nochmal antippen nimmt sie wieder raus.</p>
+      </div>
       <div class="inline-actions">
         <button type="button" class="btn small" id="captionBtn">Text als Caption kopieren</button>
         <button type="button" class="btn link" id="exampleBtn">Beispiel laden</button>
@@ -318,8 +337,8 @@ select{appearance:auto}
         <div><button type="button" class="btn small" id="resetTune">Feinschliff zurücksetzen</button></div>
       </div>
     </details>
-  </section>
-</main>
+  </main>
+</div>
 
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
   <div class="sheet-card">
@@ -392,6 +411,15 @@ const CONTENT = {
   text:'Künstliche Intelligenz ist längst Teil unseres Alltags. Sie entscheidet mit, ob jemand einen Job bekommt, welche Behandlung im Krankenhaus vorgeschlagen wird oder ob die Bank einen Kredit gibt. Viele halten diese Technologie für neutral. Das ist sie aber nicht.',
   fuss:'Kostenlose Anmeldung auf unserer Website\nEintritt frei • Spenden willkommen'
 };
+/* Vorauswahl – eigene Einträge kommen dazu, Standardeinträge lassen sich ausblenden */
+const PRESETS = {
+  dach: ['Buchvorstellung','Lesung','Konzert','DIY-Abend','Lesekreis','Vortrag','Diskussion','Podiumsdiskussion','Filmabend','Workshop','Büchermarkt','Ausstellung'],
+  fuss: ['Eintritt frei','Spenden willkommen','Eintritt auf Spendenbasis','Kostenlose Anmeldung auf unserer Website','Anmeldung erbeten','Begrenzte Plätze']
+};
+const PICKERS = {
+  dach: { mode:'set',    add:'Eigene Kategorie', placeholder:'z. B. Kneipenquiz' },
+  fuss: { mode:'toggle', add:'Eigener Baustein', placeholder:'z. B. Einlass ab 18:30' }
+};
 const DEFAULTS = Object.assign({
   template:'klassisch', format:'feed', combo:'gruen', safe:true,
   showText:{ klassisch:true, cover:false, vollbild:false, typo:true },
@@ -420,6 +448,12 @@ try { saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null'); } catch (e)
 const state = Object.assign(clone(DEFAULTS), saved && typeof saved === 'object' ? saved : {});
 state.showText = Object.assign(clone(DEFAULTS.showText), saved && saved.showText);
 state.splits = Object.assign(clone(TUNE.splits), saved && saved.splits);
+state.lists = {};
+for (const k in PICKERS) {
+  const sv = saved && saved.lists && saved.lists[k];
+  state.lists[k] = { custom: Array.isArray(sv && sv.custom) ? sv.custom.filter(x => typeof x === 'string') : [],
+                     hidden: Array.isArray(sv && sv.hidden) ? sv.hidden.filter(x => typeof x === 'string') : [] };
+}
 delete state.split;
 if (!TPL[state.template]) state.template = DEFAULTS.template;
 if (!FORMATS[state.format]) state.format = DEFAULTS.format;
@@ -1040,6 +1074,86 @@ function syncUI() {
 }
 function set(k, v) { state[k] = v; syncUI(); requestRender(); }
 
+/* ---------- Auswahl-Chips ---------- */
+const pickerUI = { dach:{ edit:false, adding:false }, fuss:{ edit:false, adding:false } };
+const SEP = ' • ';
+function listItems(k) {
+  const L = state.lists[k];
+  return PRESETS[k].filter(x => !L.hidden.includes(x)).concat(L.custom);
+}
+function footParts(text) {
+  return (text || '').split('\n').map(l => l.split('•').map(x => x.trim()).filter(Boolean));
+}
+function footHas(text, item) { return footParts(text).some(p => p.includes(item)); }
+function footToggle(text, item) {
+  let found = false;
+  const lines = footParts(text).map(p => p.filter(x => { if (x === item) { found = true; return false; } return true; })).filter(p => p.length);
+  if (!found) {
+    const last = lines[lines.length - 1];
+    if (last && last.join(SEP).length + SEP.length + item.length <= 40) last.push(item); else lines.push([item]);
+  }
+  return lines.map(p => p.join(SEP)).join('\n');
+}
+function isActive(k, item) { return PICKERS[k].mode === 'set' ? (state[k] || '').trim() === item : footHas(state[k], item); }
+function applyItem(k, item) {
+  state[k] = PICKERS[k].mode === 'set' ? item : footToggle(state[k], item);
+  $('#' + k).value = state[k];
+  renderPicker(k); requestRender();
+}
+function renderPicker(k) {
+  const box = document.querySelector(`[data-chips="${k}"]`), ui = pickerUI[k], cfg = PICKERS[k];
+  box.textContent = '';
+  box.classList.toggle('editing', ui.edit);
+  const mk = (cls, text, attrs) => { const b = document.createElement('button'); b.type = 'button'; b.className = cls; b.textContent = text; for (const a in attrs || {}) b.setAttribute(a, attrs[a]); box.append(b); return b; };
+  for (const item of listItems(k)) {
+    mk('chip-btn item', item, ui.edit ? { 'data-remove':item, 'aria-label':item + ' aus der Liste entfernen' } : { 'data-pick':item, 'aria-pressed':String(isActive(k, item)) });
+  }
+  if (ui.adding) {
+    const f = document.createElement('form'); f.className = 'chip-form';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = cfg.placeholder; inp.setAttribute('aria-label', cfg.add);
+    if (cfg.mode === 'set') { const cur = (state[k] || '').trim(); if (cur && !listItems(k).includes(cur)) inp.value = cur; }
+    const ok = document.createElement('button'); ok.type = 'submit'; ok.className = 'btn small'; ok.textContent = 'Speichern';
+    const no = document.createElement('button'); no.type = 'button'; no.className = 'btn small'; no.textContent = 'Abbrechen'; no.dataset.cancel = '1';
+    f.append(inp, ok, no); box.append(f);
+    setTimeout(() => inp.focus(), 0);
+  } else if (!ui.edit) {
+    mk('chip-btn add', '+ ' + cfg.add, { 'data-add':'1' });
+  }
+  if (!ui.adding) mk('chip-tool', ui.edit ? 'Fertig' : 'Liste bearbeiten', { 'data-edit':'1' });
+  if (ui.edit && state.lists[k].hidden.length) mk('chip-tool', 'Standardeinträge zurückholen', { 'data-restore':'1' });
+}
+document.querySelectorAll('[data-chips]').forEach(box => {
+  const k = box.dataset.chips, ui = pickerUI[k];
+  box.addEventListener('click', e => {
+    const b = e.target.closest('button');
+    if (!b || !box.contains(b)) return;
+    if (b.dataset.pick) applyItem(k, b.dataset.pick);
+    else if (b.dataset.remove) {
+      const item = b.dataset.remove, L = state.lists[k];
+      if (PRESETS[k].includes(item)) { if (!L.hidden.includes(item)) L.hidden.push(item); }
+      else L.custom = L.custom.filter(x => x !== item);
+      renderPicker(k); persist();
+    }
+    else if (b.dataset.add) { ui.adding = true; renderPicker(k); }
+    else if (b.dataset.cancel) { ui.adding = false; renderPicker(k); }
+    else if (b.dataset.edit) { ui.edit = !ui.edit; renderPicker(k); }
+    else if (b.dataset.restore) { state.lists[k].hidden = []; renderPicker(k); persist(); }
+  });
+  box.addEventListener('submit', e => {
+    e.preventDefault();
+    const v = (e.target.querySelector('input').value || '').replace(/\s+/g, ' ').trim();
+    ui.adding = false;
+    if (v) {
+      const L = state.lists[k];
+      if (PRESETS[k].includes(v)) L.hidden = L.hidden.filter(x => x !== v);
+      else if (!L.custom.includes(v)) L.custom.push(v);
+      persist();
+      if (!isActive(k, v)) { applyItem(k, v); return; }
+    }
+    renderPicker(k);
+  });
+});
+
 /* Eingaben */
 document.addEventListener('input', e => {
   const el = e.target, k = el.dataset && el.dataset.k;
@@ -1049,6 +1163,7 @@ document.addEventListener('input', e => {
   if (k === 'split') state.splits[state.format] = v; else state[k] = v;
   if (el.type === 'range') { const o = $('#o-' + k); if (o) o.textContent = v + RANGES[k].unit; }
   if (k === 'fontTitle') fillWeights();
+  if (PICKERS[k] && el.id === k) renderPicker(k);
   if (k === 'datumISO' || k === 'zeit') { state.datum = fmtDate(state.datumISO, state.zeit); $('#datum').value = state.datum; }
   if (el.type === 'checkbox' || el.tagName === 'SELECT') syncUI();
   requestRender();
@@ -1271,6 +1386,7 @@ $('#exampleBtn').addEventListener('click', e => {
   }
   clearTimeout(armT); b.classList.remove('armed'); b.textContent = 'Beispiel laden';
   Object.assign(state, clone(CONTENT));
+  for (const k in PICKERS) renderPicker(k);
   if (img.demo) {
     Object.assign(state, { imgSource:'demo', imgX:50, imgY:50, imgZoom:100 });
     setPhoto(img.demo, 'Beispielbild');
@@ -1282,6 +1398,7 @@ $('#exampleBtn').addEventListener('click', e => {
 /* ---------- Start ---------- */
 $('#mastLogo').src = ASSETS.logoSW;
 fillWeights();
+for (const k in PICKERS) renderPicker(k);
 syncUI();
 Promise.all([loadImage(ASSETS.logoSW), loadImage(ASSETS.logoBunt)]).then(([sw, bunt]) => {
   logos.sw = sw; logos.bunt = bunt;
