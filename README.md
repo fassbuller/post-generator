@@ -1,6 +1,6 @@
 # Hennwack Post-Generator
 
-Ein kleines Werkzeug im Browser, mit dem die Buchgenossenschaft Hennwack Veranstaltungsposts für Instagram baut. Texte und Bild eingeben, Vorlage und Farben wählen, feinjustieren, als PNG speichern.
+Ein kleines Werkzeug im Browser, mit dem die Buchgenossenschaft Hennwack Veranstaltungsposts für Instagram und A4-Plakate baut. Texte und Bild eingeben, Vorlage und Farben wählen, feinjustieren, als PNG oder PDF speichern.
 
 Alles steckt in einer einzigen Datei: `index.html`. Es gibt keinen Server, keine Anmeldung und keine Datenbank. Bilder und Texte bleiben im Browser des jeweiligen Geräts.
 
@@ -14,13 +14,15 @@ Die Schriften kommen von Google Fonts. Ohne Internet nimmt der Browser Ersatzsch
 ## Was das Tool kann
 
 - **Vier Vorlagen:** Klassisch (Bild oben, Infos im Farbblock), Buchcover (Cover mit Schatten auf Farbe), Vollbild (Foto randlos mit Farbetikett), Plakat (nur Schrift).
-- **Drei Formate:** Feed 4:5 (1080 × 1350), Quadrat 1:1 (1080 × 1080), Story 9:16 (1080 × 1920). Im Story-Format bleiben Texte aus dem Bereich, den Instagram mit Profilname und Antwortfeld überdeckt.
+- **Vier Formate:** Feed 4:5 (1080 × 1350), Quadrat 1:1 (1080 × 1080), Story 9:16 (1080 × 1920) und A4-Plakat (2480 × 3508, also 300 dpi). Im Story-Format bleiben Texte aus dem Bereich, den Instagram mit Profilname und Antwortfeld überdeckt.
+- **A4-Plakat:** Standardmäßig mit 5 mm weißem Rand, damit der eigene Drucker nichts abschneidet; für den Copyshop lässt sich der Rand abschalten. Speichern als PDF zum Drucken oder als PNG.
+- **QR-Code:** Link zur Anmeldung eintragen, der Code erscheint sofort im Bild – neben dem Logo, oben links oder oben rechts, mit Beschriftung und Größenregler. Ohne `https://` wird es automatisch ergänzt. Der Code wird direkt im Browser erzeugt, kein fremder Dienst bekommt den Link zu sehen. Die Farben wählt das Tool so, dass jede Handykamera den Code liest (dunkle Felder auf hellem Grund).
 - **Zehn feste Farbkombis** aus den Logofarben. Beim Hochladen eines Bildes wählt das Tool die Kombi, die zu den kräftigsten Farben im Bild passt, und markiert die drei besten.
 - **Wiedererkennung:** Farbleiste aus den acht Logofarben, gleiche Trennlinien, Logo immer unten rechts.
 - **Feinschliff:** Schriftarten, Titelstärke, Größen, Zeilenabstand, Rand, Abstände, Bildhöhe, Ausrichtung, Logo-Variante und -Größe.
 - **Passt automatisch:** Wird der Text zu lang, verkleinert das Tool die Schrift und sagt unter der Vorschau, um wie viel.
 - **Auswahl statt Tippen:** Für die Dachzeile (Buchvorstellung, Lesung, Konzert, DIY-Abend …) und die Fußzeile (Eintritt frei, Spenden willkommen …) gibt es Chips zum Antippen. Eigene Einträge lassen sich hinzufügen, Standardeinträge ausblenden.
-- **Caption kopieren:** fasst Titel, Datum, Beschreibung und Fußzeile als Text für die Bildunterschrift zusammen.
+- **Caption kopieren:** fasst Titel, Datum, Beschreibung, Fußzeile und Anmeldelink als Text für die Bildunterschrift zusammen.
 
 ## Listen für alle ändern
 
@@ -28,9 +30,15 @@ Eigene Kategorien und Bausteine speichert jedes Gerät für sich. Sollen sie fü
 
 ## Speichern
 
-- Am Rechner lädt „Als PNG speichern“ die Datei direkt herunter.
+- Am Rechner lädt „Als PNG speichern“ bzw. „Als PDF speichern“ die Datei direkt herunter.
 - Am Handy öffnet sich das Teilen-Menü, dort „Bild sichern“ wählen.
 - Klappt beides nicht, zeigt das Tool das fertige Bild an: gedrückt halten bzw. Rechtsklick → speichern.
+
+## Plakat drucken
+
+- Im Druckdialog **„Tatsächliche Größe“ bzw. 100 %** wählen, nicht „An Seite anpassen“ – sonst wird der Rand doppelt.
+- Faustregel für den QR-Code: Er sollte etwa ein Zehntel des Abstands breit sein, aus dem Leute ihn scannen. Das Tool zeigt die gedruckte Breite unter dem Link-Feld an.
+- Vor dem Aushängen einmal mit dem Handy scannen.
 
 ## Auf GitHub Pages veröffentlichen
 

@@ -96,6 +96,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .group h2{margin:0;font-size:13px;font-weight:800;font-stretch:85%;text-transform:uppercase;letter-spacing:.09em}
 .group h3{margin:6px 0 0;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .hint{margin:0;color:var(--muted);font-size:13px}
+.hint.bad{color:var(--bad);font-weight:600}
 details.group > summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
 details.group > summary::-webkit-details-marker{display:none}
 details.group > summary::after{content:"–";font-weight:700;font-size:18px;line-height:1}
@@ -129,7 +130,7 @@ details.group:not([open]) > summary::after{content:"+"}
 
 .field{display:grid;gap:6px;min-width:0}
 .field > span,.field > label{font-weight:600;font-size:13px}
-input[type="text"],input[type="date"],input[type="time"],textarea,select{width:100%;min-width:0;font-size:16px;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--radius);background:var(--surface)}
+input[type="text"],input[type="url"],input[type="date"],input[type="time"],textarea,select{width:100%;min-width:0;font-size:16px;padding:10px 12px;border:1px solid var(--rule);border-radius:var(--radius);background:var(--surface)}
 textarea{resize:vertical;line-height:1.4}
 select{appearance:auto}
 .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px}
@@ -170,6 +171,7 @@ select{appearance:auto}
   .stage-actions .btn{min-height:40px;padding:8px 12px;font-size:13.5px}
   .long{display:none}
   .short{display:inline}
+  .seg button{padding-inline:3px;font-size:12.5px;line-height:1.2}
   .typing .canvas-wrap{height:17vh;padding:6px}
   .typing .stage-actions,.typing .stage-bar{display:none}
 }
@@ -195,7 +197,7 @@ select{appearance:auto}
     <img class="mast-logo" id="mastLogo" alt="Hennwack" width="40" height="38">
     <div>
       <h1>Post-Generator</h1>
-      <p>Veranstaltungsposts für Instagram · Text eingeben, anpassen, als PNG speichern</p>
+      <p>Posts für Instagram und A4-Plakate · Text eingeben, anpassen, speichern</p>
     </div>
   </div>
 </header>
@@ -244,10 +246,20 @@ select{appearance:auto}
       <h2>Format</h2>
       <div class="seg" data-k="format" role="group" aria-label="Format">
         <button type="button" data-v="feed">Feed 4:5</button>
-        <button type="button" data-v="square">Quadrat 1:1</button>
-        <button type="button" data-v="story">Story 9:16</button>
+        <button type="button" data-v="square">Quadrat</button>
+        <button type="button" data-v="story">Story</button>
+        <button type="button" data-v="a4">A4-Plakat</button>
       </div>
       <label class="check" data-format="story"><input type="checkbox" id="safe" data-k="safe"> Bereich der Instagram-Bedienelemente zeigen (nur in der Vorschau)</label>
+      <label class="check" data-format="a4"><input type="checkbox" id="printMargin" data-k="printMargin"> 5 mm weißer Rand, damit der eigene Drucker nichts abschneidet</label>
+      <div class="field" data-format="a4">
+        <span>Speichern als</span>
+        <div class="seg" data-k="a4Out" role="group" aria-label="Dateiformat für das Plakat">
+          <button type="button" data-v="pdf">PDF zum Drucken</button>
+          <button type="button" data-v="png">PNG-Bild</button>
+        </div>
+        <p class="hint">A4 in 300 dpi (2480 × 3508 Pixel). Im Druckdialog „Tatsächliche Größe“ bzw. 100 % wählen.</p>
+      </div>
     </div>
 
     <div class="group">
@@ -290,6 +302,26 @@ select{appearance:auto}
         <button type="button" class="btn small" id="captionBtn">Text als Caption kopieren</button>
         <button type="button" class="btn link" id="exampleBtn">Beispiel laden</button>
       </div>
+    </div>
+
+    <div class="group">
+      <h2>QR-Code</h2>
+      <div class="field">
+        <label for="qrUrl">Link zur Anmeldung</label>
+        <input type="url" id="qrUrl" data-k="qrUrl" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="z. B. hennwack.com/anmeldung">
+        <p class="hint" id="qrHint" aria-live="polite"></p>
+      </div>
+      <div class="field">
+        <span>Platz</span>
+        <div class="seg" data-k="qrPos" role="group" aria-label="Platz des QR-Codes">
+          <button type="button" data-v="fuss">Neben Logo</button>
+          <button type="button" data-v="ol">Oben links</button>
+          <button type="button" data-v="or">Oben rechts</button>
+          <button type="button" data-v="aus">Aus</button>
+        </div>
+      </div>
+      <label class="field"><span>Beschriftung unter dem Code</span><input type="text" id="qrLabel" data-k="qrLabel" placeholder="leer lassen für keine"></label>
+      <div class="ranges" data-ranges="qrSize"></div>
     </div>
 
     <details class="group" id="fine" open>
@@ -363,8 +395,11 @@ const W = 1080;
 const FORMATS = {
   feed:   { h: 1350, label: 'Feed 4:5' },
   square: { h: 1080, label: 'Quadrat 1:1' },
-  story:  { h: 1920, label: 'Story 9:16', safeT: 250, safeB: 290 }
+  story:  { h: 1920, label: 'Story 9:16', safeT: 250, safeB: 290 },
+  a4:     { h: 1528, label: 'A4-Plakat', print: true, exportW: 2480, exportH: 3508 }
 };
+/* Seitenlänge des QR-Codes (ohne Rand) in px bei 1080 px Breite – auf dem Plakat größer */
+const QR_SIDE = { screen: 150, print: 180 };
 const B = { gruen:'#378a4f', gelb:'#edcb33', orange:'#e76535', hellblau:'#256db5', dunkelblau:'#14549c', lila:'#7a226f', creme:'#f3dec7', rot:'#dc274c', schwarz:'#000000' };
 const STRIPE = [B.gruen, B.gelb, B.orange, B.hellblau, B.dunkelblau, B.lila, B.creme, B.rot];
 /* bg = Fläche, ink = Fließtext & Logo, head = Titel & Datum, mark = Dachzeile, line = Trennlinien */
@@ -404,12 +439,13 @@ const TPL = {
 const TPL_ORDER = ['klassisch','cover','vollbild','typo'];
 
 const TUNE = { fontTitle:'inter', fontText:'inter', weightTitle:700, upper:true, sizeTitle:100, sizeDate:100, sizeText:100, lh:100,
-  align:'left', margin:60, gap:100, splits:{ feed:46, square:38, story:46 }, logo:'ton', logoSize:100, stripe:'oben', lines:'an' };
+  align:'left', margin:60, gap:100, splits:{ feed:46, square:38, story:46, a4:46 }, logo:'ton', logoSize:100, stripe:'oben', lines:'an' };
 const CONTENT = {
   dach:'Buchvorstellung', titel:'Code & Care', unter:'mit Tanja Kubes',
   datum:'Freitag, 23.10.2026 – 19:00 h', datumISO:'2026-10-23', zeit:'19:00',
   text:'Künstliche Intelligenz ist längst Teil unseres Alltags. Sie entscheidet mit, ob jemand einen Job bekommt, welche Behandlung im Krankenhaus vorgeschlagen wird oder ob die Bank einen Kredit gibt. Viele halten diese Technologie für neutral. Das ist sie aber nicht.',
-  fuss:'Kostenlose Anmeldung auf unserer Website\nEintritt frei • Spenden willkommen'
+  fuss:'Kostenlose Anmeldung auf unserer Website\nEintritt frei • Spenden willkommen',
+  qrUrl:''
 };
 /* Vorauswahl – eigene Einträge kommen dazu, Standardeinträge lassen sich ausblenden */
 const PRESETS = {
@@ -423,7 +459,8 @@ const PICKERS = {
 const DEFAULTS = Object.assign({
   template:'klassisch', format:'feed', combo:'gruen', safe:true,
   showText:{ klassisch:true, cover:false, vollbild:false, typo:true },
-  imgSource:'demo', imgFit:'cover', imgZoom:100, imgX:50, imgY:50
+  imgSource:'demo', imgFit:'cover', imgZoom:100, imgX:50, imgY:50,
+  printMargin:true, a4Out:'pdf', qrPos:'fuss', qrSize:100, qrLabel:'Zur Anmeldung'
 }, CONTENT, TUNE);
 
 const RANGES = {
@@ -435,6 +472,7 @@ const RANGES = {
   gap:      { label:'Abstände',     min:50, max:200, unit:' %' },
   split:    { label:'Bildhöhe',     min:25, max:70,  unit:' %', only:'klassisch,cover' },
   logoSize: { label:'Logogröße',    min:50, max:200, unit:' %' },
+  qrSize:   { label:'Größe',        min:60, max:200, unit:' %' },
   imgZoom:  { label:'Zoom',         min:50, max:300, unit:' %' },
   imgX:     { label:'Ausschnitt waagerecht', min:0, max:100, unit:' %' },
   imgY:     { label:'Ausschnitt senkrecht',  min:0, max:100, unit:' %' }
@@ -460,6 +498,8 @@ if (!FORMATS[state.format]) state.format = DEFAULTS.format;
 if (!COMBOS.some(c => c.id === state.combo)) state.combo = DEFAULTS.combo;
 if (!FONTS[state.fontTitle]) state.fontTitle = TUNE.fontTitle;
 if (!FONTS[state.fontText]) state.fontText = TUNE.fontText;
+if (!['fuss','ol','or','aus'].includes(state.qrPos)) state.qrPos = DEFAULTS.qrPos;
+if (!['pdf','png'].includes(state.a4Out)) state.a4Out = DEFAULTS.a4Out;
 
 const img = { photo:null, name:'Beispielbild', edge:'#ffffff', demo:null, suggest:[], neutral:false };
 const logos = { sw:null, bunt:null, mask:null, tint:new Map() };
@@ -576,6 +616,17 @@ function stack(ctx, items, maxW) {
   }
   return { kind:'stack', placed, textH:h, h: h ? h + last.size * 0.14 : 0 };
 }
+/* Logo und QR-Code nebeneinander als ein Block */
+function badge(logo, qr, gap) {
+  const items = [qr, logo].filter(Boolean);
+  if (!items.length) return null;
+  const h = Math.max(...items.map(i => i.h));
+  const w = items.reduce((a, i) => a + i.w, 0) + gap * (items.length - 1);
+  return { w, h, draw(ctx, x, y) {
+    let cx = x;
+    for (const it of items) { it.draw(ctx, cx, y + (h - it.h) / 2); cx += it.w + gap; }
+  } };
+}
 function footer(ctx, spec, maxW, logo, align, gap) {
   if (!spec && !logo) return { h:0 };
   if (align === 'center') {
@@ -593,10 +644,10 @@ function drawSec(ctx, sec, x, top, w, align) {
   } else if (sec.kind === 'footL') {
     const ty = top + (sec.h - sec.st.textH) / 2;
     for (const p of sec.st.placed) drawBlock(ctx, p.b, x, ty + p.y, sec.tw, 'left');
-    if (sec.logo) ctx.drawImage(sec.logo.img, x + w - sec.logo.w, top + (sec.h - sec.logo.h) / 2, sec.logo.w, sec.logo.h);
+    if (sec.logo) sec.logo.draw(ctx, x + w - sec.logo.w, top + (sec.h - sec.logo.h) / 2);
   } else if (sec.kind === 'footC') {
     for (const p of sec.st.placed) drawBlock(ctx, p.b, x, top + p.y, w, 'center');
-    if (sec.logo) ctx.drawImage(sec.logo.img, x + (w - sec.logo.w) / 2, top + sec.st.textH + sec.g, sec.logo.w, sec.logo.h);
+    if (sec.logo) sec.logo.draw(ctx, x + (w - sec.logo.w) / 2, top + sec.st.textH + sec.g);
   }
 }
 function drawFlow(ctx, secs, y, pad, I, align, x, w, sepX, sepW) {
@@ -612,8 +663,8 @@ function drawFlow(ctx, secs, y, pad, I, align, x, w, sepX, sepW) {
 }
 
 /* ---------- Bausteine ---------- */
-function frame(st) {
-  const F = FORMATS[st.format], H = F.h;
+function frame(st, H) {
+  const F = FORMATS[st.format];
   const pal = COMBOS.find(c => c.id === st.combo) || COMBOS[0];
   const stripeH = st.stripe === 'aus' ? 0 : 30;
   return {
@@ -648,9 +699,11 @@ function getLogo(st, pal, Z, s) {
   if (st.logo === 'aus' || !logos.sw) return null;
   const im = st.logo === 'bunt' ? logos.bunt : (st.logo === 'sw' || !logos.mask) ? logos.sw : tinted(pal.ink);
   const [iw, ih] = dims(im);
-  const h = Z.logo * st.logoSize / 100 * s;
-  return { img:im, h, w:h * iw / ih };
+  const h = Z.logo * st.logoSize / 100 * s, w = h * iw / ih;
+  return { h, w, draw(ctx, x, y) { ctx.drawImage(im, x, y, w, h); } };
 }
+/* Logo plus QR-Code, wenn der Code in der Fußzeile sitzt */
+function footMark(I, logo, s) { return badge(logo, I.qrCorner ? null : I.qr, 22 * s); }
 function panelSecs(ctx, st, sp, maxW, logo, s) {
   const out = [];
   const head = headStack(ctx, sp, maxW, true);
@@ -745,11 +798,282 @@ function drawSafe(ctx, I) {
   ctx.restore();
 }
 
+/* ---------- QR-Code (ISO/IEC 18004: Byte-Modus, Fehlerkorrektur M, Version 1–40) ---------- */
+const QR = (() => {
+  /* Fehlerkorrektur-Bytes je Block und Anzahl Blöcke für Stufe M, Index = Version */
+  const ECC = [-1,10,16,26,18,24,16,18,22,22,26,30,22,22,24,24,28,28,26,26,26,26,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28,28];
+  const BLK = [-1,1,1,1,2,2,4,4,4,5,5,5,8,9,9,10,10,11,13,14,16,17,17,18,20,21,23,25,26,28,29,31,33,35,37,38,40,43,45,47,49];
+  const LEVEL_M = 0; /* Formatbits der Stufe M */
+
+  function rawModules(v) {
+    let r = (16 * v + 128) * v + 64;
+    if (v >= 2) {
+      const na = Math.floor(v / 7) + 2;
+      r -= (25 * na - 10) * na - 55;
+      if (v >= 7) r -= 36;
+    }
+    return r;
+  }
+  const dataCodewords = v => Math.floor(rawModules(v) / 8) - ECC[v] * BLK[v];
+
+  function gfMul(x, y) {
+    let z = 0;
+    for (let i = 7; i >= 0; i--) { z = (z << 1) ^ ((z >>> 7) * 0x11D); z ^= ((y >>> i) & 1) * x; }
+    return z;
+  }
+  function rsDivisor(deg) {
+    const r = new Array(deg).fill(0);
+    r[deg - 1] = 1;
+    let root = 1;
+    for (let i = 0; i < deg; i++) {
+      for (let j = 0; j < deg; j++) { r[j] = gfMul(r[j], root); if (j + 1 < deg) r[j] ^= r[j + 1]; }
+      root = gfMul(root, 2);
+    }
+    return r;
+  }
+  function rsRemainder(data, div) {
+    const r = new Array(div.length).fill(0);
+    for (const b of data) {
+      const f = b ^ r.shift();
+      r.push(0);
+      for (let i = 0; i < div.length; i++) r[i] ^= gfMul(div[i], f);
+    }
+    return r;
+  }
+  function alignPositions(v, size) {
+    if (v === 1) return [];
+    const na = Math.floor(v / 7) + 2;
+    const step = v === 32 ? 26 : Math.ceil((v * 4 + 4) / (na * 2 - 2)) * 2;
+    const res = [6];
+    for (let p = size - 7; res.length < na; p -= step) res.splice(1, 0, p);
+    return res;
+  }
+  const MASKS = [
+    (x, y) => (x + y) % 2 === 0,
+    (x, y) => y % 2 === 0,
+    (x, y) => x % 3 === 0,
+    (x, y) => (x + y) % 3 === 0,
+    (x, y) => (Math.floor(x / 3) + Math.floor(y / 2)) % 2 === 0,
+    (x, y) => x * y % 2 + x * y % 3 === 0,
+    (x, y) => (x * y % 2 + x * y % 3) % 2 === 0,
+    (x, y) => ((x + y) % 2 + x * y % 3) % 2 === 0
+  ];
+  const F1 = [1,0,1,1,1,0,1,0,0,0,0], F2 = [0,0,0,0,1,0,1,1,1,0,1];
+  function penalty(m, n) {
+    let p = 0, dark = 0;
+    for (let pass = 0; pass < 2; pass++) {
+      for (let a = 0; a < n; a++) {
+        const line = new Uint8Array(n);
+        for (let b = 0; b < n; b++) line[b] = pass ? m[b][a] : m[a][b];
+        let run = 1;
+        for (let b = 1; b < n; b++) {
+          if (line[b] === line[b - 1]) run++;
+          else { if (run >= 5) p += run - 2; run = 1; }
+        }
+        if (run >= 5) p += run - 2;
+        for (let b = 0; b + 11 <= n; b++) {
+          let m1 = true, m2 = true;
+          for (let k = 0; k < 11 && (m1 || m2); k++) {
+            if (line[b + k] !== F1[k]) m1 = false;
+            if (line[b + k] !== F2[k]) m2 = false;
+          }
+          if (m1) p += 40;
+          if (m2) p += 40;
+        }
+      }
+    }
+    for (let y = 0; y < n - 1; y++) for (let x = 0; x < n - 1; x++) {
+      const c = m[y][x];
+      if (c === m[y][x + 1] && c === m[y + 1][x] && c === m[y + 1][x + 1]) p += 3;
+    }
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) dark += m[y][x];
+    p += Math.floor(Math.abs(dark * 20 - n * n * 10) / (n * n)) * 10;
+    return p;
+  }
+
+  /* Liefert { size, mod } mit mod[y][x] = 1 für dunkle Felder, oder null, wenn der Text zu lang ist */
+  function encode(text, forceMask) {
+    const bytes = Array.from(new TextEncoder().encode(text));
+    let v = 1;
+    while (v <= 40 && 4 + (v < 10 ? 8 : 16) + 8 * bytes.length > dataCodewords(v) * 8) v++;
+    if (v > 40) return null;
+
+    /* Datenbits: Modus 0100, Länge, Bytes, Abschluss, Füllbytes */
+    const bits = [];
+    const put = (val, len) => { for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1); };
+    put(4, 4);
+    put(bytes.length, v < 10 ? 8 : 16);
+    for (const b of bytes) put(b, 8);
+    const cap = dataCodewords(v) * 8;
+    put(0, Math.min(4, cap - bits.length));
+    put(0, (8 - bits.length % 8) % 8);
+    for (let pad = 0xEC; bits.length < cap; pad ^= 0xEC ^ 0x11) put(pad, 8);
+    const data = [];
+    for (let i = 0; i < bits.length; i += 8) {
+      let b = 0;
+      for (let j = 0; j < 8; j++) b = (b << 1) | bits[i + j];
+      data.push(b);
+    }
+
+    /* Blöcke mit Reed-Solomon-Korrektur, danach verschränkt */
+    const nb = BLK[v], ecl = ECC[v], raw = Math.floor(rawModules(v) / 8);
+    const nShort = nb - raw % nb, shortLen = Math.floor(raw / nb);
+    const div = rsDivisor(ecl), blocks = [];
+    for (let i = 0, k = 0; i < nb; i++) {
+      const dat = data.slice(k, k + shortLen - ecl + (i < nShort ? 0 : 1));
+      k += dat.length;
+      const ecc = rsRemainder(dat, div);
+      if (i < nShort) dat.push(0);
+      blocks.push(dat.concat(ecc));
+    }
+    const cw = [];
+    for (let i = 0; i < blocks[0].length; i++) {
+      blocks.forEach((b, j) => { if (i !== shortLen - ecl || j >= nShort) cw.push(b[i]); });
+    }
+
+    /* Matrix mit Funktionsmustern */
+    const size = v * 4 + 17;
+    const mod = Array.from({ length: size }, () => new Uint8Array(size));
+    const fn = Array.from({ length: size }, () => new Uint8Array(size));
+    const setF = (x, y, d) => { mod[y][x] = d ? 1 : 0; fn[y][x] = 1; };
+    for (let i = 0; i < size; i++) { setF(6, i, i % 2 === 0); setF(i, 6, i % 2 === 0); }
+    const finder = (cx, cy) => {
+      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
+        const d = Math.max(Math.abs(dx), Math.abs(dy)), x = cx + dx, y = cy + dy;
+        if (x >= 0 && x < size && y >= 0 && y < size) setF(x, y, d !== 2 && d !== 4);
+      }
+    };
+    finder(3, 3); finder(size - 4, 3); finder(3, size - 4);
+    const ap = alignPositions(v, size), na = ap.length;
+    for (let i = 0; i < na; i++) for (let j = 0; j < na; j++) {
+      if ((i === 0 && j === 0) || (i === 0 && j === na - 1) || (i === na - 1 && j === 0)) continue;
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+        setF(ap[i] + dx, ap[j] + dy, Math.max(Math.abs(dx), Math.abs(dy)) !== 1);
+      }
+    }
+    const drawFormat = mask => {
+      const d5 = (LEVEL_M << 3) | mask;
+      let rem = d5;
+      for (let i = 0; i < 10; i++) rem = (rem << 1) ^ ((rem >>> 9) * 0x537);
+      const b = ((d5 << 10) | rem) ^ 0x5412, bit = i => (b >>> i) & 1;
+      for (let i = 0; i <= 5; i++) setF(8, i, bit(i));
+      setF(8, 7, bit(6)); setF(8, 8, bit(7)); setF(7, 8, bit(8));
+      for (let i = 9; i < 15; i++) setF(14 - i, 8, bit(i));
+      for (let i = 0; i < 8; i++) setF(size - 1 - i, 8, bit(i));
+      for (let i = 8; i < 15; i++) setF(8, size - 15 + i, bit(i));
+      setF(8, size - 8, 1);
+    };
+    drawFormat(0);
+    if (v >= 7) {
+      let rem = v;
+      for (let i = 0; i < 12; i++) rem = (rem << 1) ^ ((rem >>> 11) * 0x1F25);
+      const b = (v << 12) | rem;
+      for (let i = 0; i < 18; i++) {
+        const d = (b >>> i) & 1, a = size - 11 + i % 3, c = Math.floor(i / 3);
+        setF(a, c, d); setF(c, a, d);
+      }
+    }
+
+    /* Datenbits im Zickzack einsetzen */
+    let i = 0;
+    for (let right = size - 1; right >= 1; right -= 2) {
+      if (right === 6) right = 5;
+      for (let vert = 0; vert < size; vert++) for (let j = 0; j < 2; j++) {
+        const x = right - j, up = ((right + 1) & 2) === 0, y = up ? size - 1 - vert : vert;
+        if (!fn[y][x] && i < cw.length * 8) { mod[y][x] = (cw[i >>> 3] >>> (7 - (i & 7))) & 1; i++; }
+      }
+    }
+
+    /* Maske mit der geringsten Strafpunktzahl wählen */
+    const applyMask = mk => {
+      for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) if (!fn[y][x] && MASKS[mk](x, y)) mod[y][x] ^= 1;
+    };
+    let best = forceMask >= 0 ? forceMask : 0;
+    if (!(forceMask >= 0)) {
+      let bestScore = Infinity;
+      for (let mk = 0; mk < 8; mk++) {
+        applyMask(mk); drawFormat(mk);
+        const sc = penalty(mod, size);
+        if (sc < bestScore) { bestScore = sc; best = mk; }
+        applyMask(mk);
+      }
+    }
+    applyMask(best); drawFormat(best);
+    return { size, mod, version: v, mask: best };
+  }
+  return { encode };
+})();
+
+/* Text für den Code: ohne Schema wird https:// ergänzt */
+function qrText(raw) {
+  let t = (raw || '').trim();
+  if (!t) return '';
+  if (!/^[a-z][a-z0-9+.-]*:/i.test(t) || /^[^/:]+\.[a-z]{2,}:\d/i.test(t)) t = 'https://' + t;
+  return t;
+}
+const qrCache = new Map();
+function qrMatrix(text) {
+  if (!text) return null;
+  if (!qrCache.has(text)) { let r = null; try { r = QR.encode(text); } catch (e) { r = null; } qrCache.set(text, r); }
+  return qrCache.get(text);
+}
+function relLum(hex) {
+  const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); };
+  const [r, g, b] = hexRgb(hex);
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+const contrastRatio = (a, b) => { const x = relLum(a), y = relLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+/* Dunkle Felder auf hellem Grund, damit jede Kamera den Code liest */
+function qrColors(pal, overPhoto) {
+  const light = relLum(pal.bg) > 0.45;
+  const tile = light ? pal.bg : B.creme;
+  const dark = [pal.bg, pal.head, pal.ink, pal.mark, B.schwarz]
+    .find(c => relLum(c) < relLum(tile) && contrastRatio(c, tile) >= 5.5) || B.schwarz;
+  return { tile, dark, showTile: overPhoto || !light };
+}
+function qrBlock(ctx, st, pal, F, overPhoto) {
+  if (st.qrPos === 'aus') return null;
+  const q = qrMatrix(qrText(st.qrUrl));
+  if (!q) return null;
+  const side = (F.print ? QR_SIDE.print : QR_SIDE.screen) * st.qrSize / 100;
+  const md = side / q.size, qz = md * 3, col = qrColors(pal, overPhoto);
+  const label = (st.qrLabel || '').trim(), lf = st.fontText, lw8 = near(lf, 700);
+  let ls = 0, lw = 0, cap = 0;
+  if (label) {
+    ls = clamp(side * 0.115, 14, 46);
+    setFont(ctx, lf, lw8, ls, 0);
+    lw = ctx.measureText(label).width;
+    if (lw > side + qz) { ls *= (side + qz) / lw; lw = side + qz; }
+    cap = capRatio(ctx, lf, lw8) * ls;
+  }
+  const w = side + 2 * qz;
+  const h = label ? qz + side + qz * 0.75 + ls * 0.98 + qz * 0.75 : side + 2 * qz;
+  return { w, h, draw(c, x, y) {
+    if (col.showTile) { c.fillStyle = col.tile; c.fillRect(x, y, w, h); }
+    c.fillStyle = col.dark;
+    c.beginPath();
+    for (let r = 0; r < q.size; r++) {
+      let run = -1;
+      for (let k = 0; k <= q.size; k++) {
+        const on = k < q.size && q.mod[r][k];
+        if (on && run < 0) run = k;
+        else if (!on && run >= 0) { c.rect(x + qz + run * md, y + qz + r * md, (k - run) * md, md); run = -1; }
+      }
+    }
+    c.fill();
+    if (label) {
+      setFont(c, lf, lw8, ls, 0);
+      c.textAlign = 'left'; c.textBaseline = 'alphabetic';
+      c.fillText(label, x + (w - lw) / 2, y + qz + side + qz * 0.75 + cap);
+    }
+  } };
+}
+
 /* ---------- Vorlagen ---------- */
 const TFN = {
   klassisch(ctx, st, s, I, o) {
     const Z = TPL.klassisch.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = getLogo(st, I.pal, Z, s);
+    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
     const imgH = Math.round((I.botY - I.topY) * st.splits[st.format] / 100);
     const pTop = I.topY + imgH + I.LI, pBot = Math.min(I.botY, I.H - I.safeB);
     const secs = panelSecs(ctx, st, sp, maxW, logo, s);
@@ -764,7 +1088,7 @@ const TFN = {
   },
   cover(ctx, st, s, I, o) {
     const Z = TPL.cover.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = getLogo(st, I.pal, Z, s);
+    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
     const aTop = I.topY + Math.max(I.M, I.safeT);
     const cBot = I.topY + Math.round((I.botY - I.topY) * st.splits[st.format] / 100);
     const pBot = Math.min(I.botY, I.H - I.safeB);
@@ -780,7 +1104,7 @@ const TFN = {
   vollbild(ctx, st, s, I, o) {
     const Z = TPL.vollbild.sz, sp = specs(st, I.pal, Z, s), g = st.gap / 100;
     const cx = I.M, cw = W - 2 * I.M, ip = Math.round(clamp(I.M * 0.75, 28, 64)), maxW = cw - 2 * ip;
-    const logo = getLogo(st, I.pal, Z, s);
+    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
     const secs = panelSecs(ctx, st, sp, maxW, logo, s);
     const n = secs.length, total = sumH(secs, I.SEP), pad = 30 * g * s;
     const cardH = n ? I.LI + total + 2 * n * pad : 0;
@@ -798,8 +1122,9 @@ const TFN = {
   },
   typo(ctx, st, s, I, o) {
     const Z = TPL.typo.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = getLogo(st, I.pal, Z, s);
-    const cTop = I.topY + Math.max(I.M * 1.1, I.safeT);
+    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
+    const qrY = I.topY + Math.max(I.M * 1.1, I.safeT);
+    const cTop = I.qr && I.qrCorner ? qrY + I.qr.h + 36 * g * s : qrY;
     const cBot = Math.min(I.botY, I.H - I.safeB) - I.M * 0.9;
     const head = headStack(ctx, sp, maxW, false);
     const bottom = [];
@@ -811,7 +1136,7 @@ const TFN = {
     const bH = bottom.reduce((a, x) => a + x.h, 0) + Math.max(0, nb - 1) * (2 * pb + I.SEP);
     const lead = nb ? 2 * pb + I.SEP : 0;
     const minGap = head.h && nb ? 48 * g * s : 0;
-    return { overflow: head.h + minGap + lead + bH - (cBot - cTop), draw() {
+    return { qrY, overflow: head.h + minGap + lead + bH - (cBot - cTop), draw() {
       ctx.fillStyle = I.pal.bg; ctx.fillRect(0, 0, W, I.H);
       const free = (cBot - bH - lead) - cTop - head.h - minGap;
       if (head.h) drawSec(ctx, head, I.M, cTop + Math.max(0, free) * 0.4, maxW, st.align);
@@ -832,14 +1157,35 @@ const TFN = {
 };
 
 /* Satz mit automatischer Verkleinerung, bis alles passt */
-function compose(ctx, st, o) {
-  const I = frame(st), fn = TFN[st.template];
+function composeInner(ctx, st, o, H) {
+  const I = frame(st, H), fn = TFN[st.template];
+  I.qrCorner = st.qrPos === 'ol' || st.qrPos === 'or';
+  I.qr = qrBlock(ctx, st, I.pal, I.F, I.qrCorner);
   let s = 1, plan = fn(ctx, st, s, I, o), i = 0;
   while (plan.overflow > 0.5 && i < 20) { s *= 0.965; plan = fn(ctx, st, s, I, o); i++; }
   plan.draw();
+  if (I.qr && I.qrCorner) {
+    const qx = st.qrPos === 'ol' ? I.M : W - I.M - I.qr.w;
+    const qy = plan.qrY != null ? plan.qrY : I.topY + Math.max(I.M, I.safeT ? I.safeT + 16 : 0);
+    I.qr.draw(ctx, qx, qy);
+  }
   if (I.stripeH) drawStripe(ctx, st.stripe === 'oben' ? 0 : I.H - I.stripeH, I.stripeH);
   if (o.preview && st.format === 'story' && st.safe) drawSafe(ctx, I);
   return { s, overflow: plan.overflow, H: I.H };
+}
+/* A4 mit Druckrand: Motiv verkleinert in einen weißen 5-mm-Rahmen setzen */
+const printInset = st => FORMATS[st.format].print && st.printMargin ? W * 5 / 210 : 0;
+function compose(ctx, st, o) {
+  const F = FORMATS[st.format], m = printInset(st);
+  if (!m) return composeInner(ctx, st, o, F.h);
+  const f = (W - 2 * m) / W, Hin = (F.h - 2 * m) / f;
+  ctx.save();
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, F.h);
+  ctx.translate(m, m); ctx.scale(f, f);
+  ctx.beginPath(); ctx.rect(0, 0, W, Hin); ctx.clip();
+  const r = composeInner(ctx, st, o, Hin);
+  ctx.restore();
+  return Object.assign(r, { H: F.h });
 }
 
 /* ---------- Farbe aus dem Bild ---------- */
@@ -961,7 +1307,8 @@ function renderPreview() {
   if (r.overflow > 0.5) { chip.dataset.state = 'bad'; chip.textContent = 'Zu viel Text für dieses Format – bitte kürzen'; }
   else if (r.s < 0.995) { chip.dataset.state = 'warn'; chip.textContent = `Schrift automatisch auf ${Math.round(r.s * 100)} % verkleinert`; }
   else { chip.dataset.state = 'ok'; chip.textContent = 'Alles passt'; }
-  $('#dims').textContent = `${FORMATS[state.format].label} · ${W} × ${H} px`;
+  const F = FORMATS[state.format];
+  $('#dims').textContent = F.print ? `A4 · 210 × 297 mm · 300 dpi` : `${F.label} · ${W} × ${H} px`;
 }
 function renderThumbs() {
   const K = 0.2, H = FORMATS[state.format].h;
@@ -1071,6 +1418,26 @@ function syncUI() {
   $('#canvasWrap').classList.toggle('can-drag', hasImgTpl && !!img.photo);
   $('#imgName').textContent = img.photo ? img.name : 'Kein Bild gewählt';
   $('#clearImg').hidden = !img.photo;
+  updateExportLabel();
+  updateQrHint();
+}
+const wantsPdf = () => FORMATS[state.format].print && state.a4Out === 'pdf';
+function updateExportLabel() { $('#exportBtn').textContent = wantsPdf() ? 'Als PDF speichern' : 'Als PNG speichern'; }
+function updateQrHint() {
+  const el = $('#qrHint'), raw = (state.qrUrl || '').trim();
+  el.classList.remove('bad');
+  if (!raw) { el.textContent = 'Sobald hier ein Link steht, erscheint der QR-Code im Bild.'; return; }
+  const t = qrText(raw);
+  if (!qrMatrix(t)) { el.textContent = 'Dieser Link ist zu lang für einen QR-Code.'; el.classList.add('bad'); return; }
+  const parts = [];
+  if (t !== raw) parts.push('Wird als ' + t + ' gespeichert.');
+  if (state.qrPos === 'aus') parts.push('Der QR-Code ist gerade ausgeblendet.');
+  else if (FORMATS[state.format].print) {
+    const f = (W - 2 * printInset(state)) / W;
+    const cm = QR_SIDE.print * state.qrSize / 100 * f * 21 / W;
+    parts.push(`Gedruckt etwa ${cm.toFixed(1).replace('.', ',')} cm breit, lesbar aus rund ${Math.round(cm * 2) * 5} cm Abstand.`);
+  }
+  el.textContent = parts.join(' ') || 'Der QR-Code ist im Bild.';
 }
 function set(k, v) { state[k] = v; syncUI(); requestRender(); }
 
@@ -1164,6 +1531,7 @@ document.addEventListener('input', e => {
   if (el.type === 'range') { const o = $('#o-' + k); if (o) o.textContent = v + RANGES[k].unit; }
   if (k === 'fontTitle') fillWeights();
   if (PICKERS[k] && el.id === k) renderPicker(k);
+  if (k === 'qrUrl' || k === 'qrSize') updateQrHint();
   if (k === 'datumISO' || k === 'zeit') { state.datum = fmtDate(state.datumISO, state.zeit); $('#datum').value = state.datum; }
   if (el.type === 'checkbox' || el.tagName === 'SELECT') syncUI();
   requestRender();
@@ -1187,10 +1555,10 @@ function fmtDate(iso, time) {
 
 /* Handy: Vorschau beim Tippen verkleinern */
 document.addEventListener('focusin', e => {
-  if (e.target.matches('input[type="text"], textarea')) document.body.classList.add('typing');
+  if (e.target.matches('input[type="text"], input[type="url"], textarea')) document.body.classList.add('typing');
 });
 document.addEventListener('focusout', () => {
-  setTimeout(() => { if (!document.activeElement || !document.activeElement.matches('input[type="text"], textarea')) document.body.classList.remove('typing'); }, 60);
+  setTimeout(() => { if (!document.activeElement || !document.activeElement.matches('input[type="text"], input[type="url"], textarea')) document.body.classList.remove('typing'); }, 60);
 });
 
 /* Bild wählen, ziehen, einfügen */
@@ -1287,9 +1655,9 @@ function getDownloads() {
 getDownloads();
 const IN_VIEWER = !!(window.claude && typeof window.claude.use === 'function');
 /* Außerhalb von Claude (z. B. GitHub Pages): am Handy Teilen-Menü, sonst normaler Download */
-async function saveStandalone(blob, name) {
+async function saveStandalone(blob, name, previewBlob) {
   try {
-    const file = new File([blob], name, { type:'image/png' });
+    const file = new File([blob], name, { type: blob.type || 'image/png' });
     const touch = window.matchMedia && matchMedia('(pointer: coarse)').matches;
     if (touch && navigator.canShare && navigator.canShare({ files:[file] })) {
       try { await navigator.share({ files:[file] }); return; }
@@ -1299,41 +1667,80 @@ async function saveStandalone(blob, name) {
     a.href = url; a.download = name; document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 5000);
     toast('Gespeichert: ' + name);
-  } catch (e) { showImage(blob, name); }
+  } catch (e) { showImage(previewBlob || blob, name); }
+}
+/* Ein Bild mit JPEG-Inhalt als A4-Seite verpacken (PDF 1.4, ohne Bibliothek) */
+function makePdf(jpeg, pxW, pxH) {
+  const enc = new TextEncoder(), parts = [], off = [];
+  let len = 0;
+  const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+  const obj = (n, body) => { off[n] = len; push(`${n} 0 obj\n`); body(); push('\nendobj\n'); };
+  const PW = '595.28', PH = '841.89', content = `q ${PW} 0 0 ${PH} 0 0 cm /Im0 Do Q`;
+  push('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n');
+  obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
+  obj(2, () => push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
+  obj(3, () => push(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`));
+  obj(4, () => {
+    push(`<< /Type /XObject /Subtype /Image /Width ${pxW} /Height ${pxH} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${jpeg.length} >>\nstream\n`);
+    push(jpeg); push('\nendstream');
+  });
+  obj(5, () => push(`<< /Length ${content.length} >>\nstream\n${content}\nendstream`));
+  const xref = len;
+  let x = 'xref\n0 6\n0000000000 65535 f \n';
+  for (let i = 1; i <= 5; i++) x += String(off[i]).padStart(10, '0') + ' 00000 n \n';
+  push(x + `trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`);
+  return new Blob(parts, { type:'application/pdf' });
 }
 function slug(s) {
   return (s || '').toLowerCase().replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')
     .replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40);
 }
-function fileName() {
-  return `hennwack_${state.datumISO || 'post'}_${slug(state.titel) || 'veranstaltung'}_${state.format}.png`;
+function fileName(ext) {
+  return `hennwack_${state.datumISO || 'post'}_${slug(state.titel) || 'veranstaltung'}_${state.format}.${ext}`;
+}
+/* Endgröße: Instagram 1080 px breit, A4 in 300 dpi */
+async function renderBlob(type) {
+  await ensureFonts(state);
+  const F = FORMATS[state.format], ew = F.exportW || W, eh = F.exportH || F.h;
+  const c = document.createElement('canvas');
+  c.width = ew; c.height = eh;
+  const x = c.getContext('2d');
+  x.setTransform(ew / W, 0, 0, eh / F.h, 0, 0);
+  compose(x, state, { preview:false });
+  const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('leer')), type, 0.93));
+  return { blob, ew, eh };
+}
+async function deliver(blob, name, previewBlob) {
+  const dl = await getDownloads();
+  if (dl) {
+    try {
+      const r = await dl.save({ filename:name, data:blob });
+      toast(r && r.status === 'delivered' ? 'Übergeben' : 'Gespeichert: ' + name);
+    } catch (err) {
+      const code = err && err.code;
+      if (code === 'declined') toast('Speichern abgebrochen');
+      else if (code === 'rate_limited') toast('Es ist schon ein Speicherdialog offen');
+      else if (code === 'extension_not_enabled' || code === 'rejected_extension') toast('PDF lässt sich hier nicht speichern. Stell bei „Speichern als“ auf PNG um.');
+      else showImage(previewBlob, name);
+    }
+  } else if (!IN_VIEWER) await saveStandalone(blob, name, previewBlob);
+  else showImage(previewBlob, name);
 }
 $('#exportBtn').addEventListener('click', async () => {
-  const btn = $('#exportBtn'), label = btn.textContent;
+  const btn = $('#exportBtn');
   btn.disabled = true; btn.textContent = 'Wird erstellt …';
   try {
-    await ensureFonts(state);
-    const H = FORMATS[state.format].h, c = document.createElement('canvas');
-    c.width = W; c.height = H;
-    compose(c.getContext('2d'), state, { preview:false });
-    const blob = await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('leer')), 'image/png'));
-    const name = fileName();
-    const dl = await getDownloads();
-    if (dl) {
-      try {
-        const r = await dl.save({ filename:name, data:blob });
-        toast(r && r.status === 'delivered' ? 'Übergeben' : 'Gespeichert: ' + name);
-      } catch (err) {
-        const code = err && err.code;
-        if (code === 'declined') toast('Speichern abgebrochen');
-        else if (code === 'rate_limited') toast('Es ist schon ein Speicherdialog offen');
-        else showImage(blob, name);
-      }
-    } else if (!IN_VIEWER) await saveStandalone(blob, name);
-    else showImage(blob, name);
+    if (wantsPdf()) {
+      const { blob, ew, eh } = await renderBlob('image/jpeg');
+      const pdf = makePdf(new Uint8Array(await blob.arrayBuffer()), ew, eh);
+      await deliver(pdf, fileName('pdf'), blob);
+    } else {
+      const { blob } = await renderBlob('image/png');
+      await deliver(blob, fileName('png'), blob);
+    }
   } catch (e) {
     toast('Das Bild konnte nicht erstellt werden. Bitte noch einmal versuchen.');
-  } finally { btn.disabled = false; btn.textContent = label; }
+  } finally { btn.disabled = false; updateExportLabel(); }
 });
 
 let sheetURL = null;
@@ -1359,7 +1766,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#sheet
 function captionText() {
   const t = v => (v || '').trim();
   const l1 = [t(state.dach), t(state.titel)].filter(Boolean).join(': ') + (t(state.unter) ? ' – ' + t(state.unter) : '');
-  return [l1, t(state.datum), '', t(state.text), '', t(state.fuss)].join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  const link = qrText(state.qrUrl);
+  return [l1, t(state.datum), '', t(state.text), '', t(state.fuss), link].join('\n').replace(/\n{3,}/g, '\n\n').trim();
 }
 $('#captionBtn').addEventListener('click', () => {
   const t = captionText();
