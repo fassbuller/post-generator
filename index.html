@@ -314,6 +314,7 @@ select{appearance:auto}
       <div class="field">
         <span>Platz</span>
         <div class="seg" data-k="qrPos" role="group" aria-label="Platz des QR-Codes">
+          <button type="button" data-v="ul">Unten links</button>
           <button type="button" data-v="fuss">Neben Logo</button>
           <button type="button" data-v="ol">Oben links</button>
           <button type="button" data-v="or">Oben rechts</button>
@@ -350,7 +351,8 @@ select{appearance:auto}
           <button type="button" data-v="bunt">Bunt</button>
           <button type="button" data-v="aus">Ohne</button>
         </div>
-        <div class="ranges" data-ranges="logoSize"></div>
+        <div class="ranges" id="logoSizeBox" data-ranges="logoSize"></div>
+        <p class="hint" id="logoCoupled" hidden>Das Logo ist so hoch wie der QR-Code. Die Größe stellst du beim QR-Code ein.</p>
         <div class="field">
           <span>Farbleiste aus den Logofarben</span>
           <div class="seg" data-k="stripe" role="group" aria-label="Farbleiste">
@@ -460,7 +462,7 @@ const DEFAULTS = Object.assign({
   template:'klassisch', format:'feed', combo:'gruen', safe:true,
   showText:{ klassisch:true, cover:false, vollbild:false, typo:true },
   imgSource:'demo', imgFit:'cover', imgZoom:100, imgX:50, imgY:50,
-  printMargin:true, a4Out:'pdf', qrPos:'fuss', qrSize:100, qrLabel:'Zur Anmeldung'
+  printMargin:true, a4Out:'pdf', qrPos:'ul', qrSize:100, qrLabel:'Zur Anmeldung'
 }, CONTENT, TUNE);
 
 const RANGES = {
@@ -498,7 +500,7 @@ if (!FORMATS[state.format]) state.format = DEFAULTS.format;
 if (!COMBOS.some(c => c.id === state.combo)) state.combo = DEFAULTS.combo;
 if (!FONTS[state.fontTitle]) state.fontTitle = TUNE.fontTitle;
 if (!FONTS[state.fontText]) state.fontText = TUNE.fontText;
-if (!['fuss','ol','or','aus'].includes(state.qrPos)) state.qrPos = DEFAULTS.qrPos;
+if (!['ul','fuss','ol','or','aus'].includes(state.qrPos)) state.qrPos = DEFAULTS.qrPos;
 if (!['pdf','png'].includes(state.a4Out)) state.a4Out = DEFAULTS.a4Out;
 
 const img = { photo:null, name:'Beispielbild', edge:'#ffffff', demo:null, suggest:[], neutral:false };
@@ -627,8 +629,13 @@ function badge(logo, qr, gap) {
     for (const it of items) { it.draw(ctx, cx, y + (h - it.h) / 2); cx += it.w + gap; }
   } };
 }
-function footer(ctx, spec, maxW, logo, align, gap) {
-  if (!spec && !logo) return { h:0 };
+function footer(ctx, spec, maxW, logo, align, gap, left) {
+  if (!spec && !logo && !left) return { h:0 };
+  if (left) {
+    const lw = left.w + 40, rw = logo ? logo.w + 40 : 0, tw = Math.max(80, maxW - lw - rw);
+    const st = stack(ctx, [{ spec }], tw);
+    return { kind:'footLR', st, logo, left, lw, tw, align, h: Math.max(st.textH, left.h, logo ? logo.h : 0) };
+  }
   if (align === 'center') {
     const st = stack(ctx, [{ spec }], maxW);
     const g = st.textH && logo ? gap : 0;
@@ -648,6 +655,11 @@ function drawSec(ctx, sec, x, top, w, align) {
   } else if (sec.kind === 'footC') {
     for (const p of sec.st.placed) drawBlock(ctx, p.b, x, top + p.y, w, 'center');
     if (sec.logo) sec.logo.draw(ctx, x + (w - sec.logo.w) / 2, top + sec.st.textH + sec.g);
+  } else if (sec.kind === 'footLR') {
+    sec.left.draw(ctx, x, top + (sec.h - sec.left.h) / 2);
+    const ty = top + (sec.h - sec.st.textH) / 2;
+    for (const p of sec.st.placed) drawBlock(ctx, p.b, x + sec.lw, ty + p.y, sec.tw, sec.align);
+    if (sec.logo) sec.logo.draw(ctx, x + w - sec.logo.w, top + (sec.h - sec.logo.h) / 2);
   }
 }
 function drawFlow(ctx, secs, y, pad, I, align, x, w, sepX, sepW) {
@@ -699,17 +711,25 @@ function getLogo(st, pal, Z, s) {
   if (st.logo === 'aus' || !logos.sw) return null;
   const im = st.logo === 'bunt' ? logos.bunt : (st.logo === 'sw' || !logos.mask) ? logos.sw : tinted(pal.ink);
   const [iw, ih] = dims(im);
-  const h = Z.logo * st.logoSize / 100 * s, w = h * iw / ih;
-  return { h, w, draw(ctx, x, y) { ctx.drawImage(im, x, y, w, h); } };
+  return sizedLogo(im, Z.logo * st.logoSize / 100 * s);
 }
-/* Logo plus QR-Code, wenn der Code in der Fußzeile sitzt */
-function footMark(I, logo, s) { return badge(logo, I.qrCorner ? null : I.qr, 22 * s); }
+function sizedLogo(im, h) {
+  const [iw, ih] = dims(im), w = h * iw / ih;
+  return { img:im, h, w, draw(ctx, x, y) { ctx.drawImage(im, x, y, w, h); } };
+}
+/* Sitzt der QR-Code in der Fußzeile, wird das Logo genauso hoch: links der Code oder Code und Logo nebeneinander */
+function footMarks(I, logo, s) {
+  const qr = I.qr && !I.qrCorner ? I.qr : null;
+  if (qr && logo) logo = sizedLogo(logo.img, qr.h);
+  if (qr && I.qrLeft) return { right: logo, left: qr };
+  return { right: badge(logo, qr, 22 * s), left: null };
+}
 function panelSecs(ctx, st, sp, maxW, logo, s) {
   const out = [];
   const head = headStack(ctx, sp, maxW, true);
   if (head.h) out.push(head);
   if (sp.text) { const t = stack(ctx, [{ spec:sp.text }], maxW); if (t.h) out.push(t); }
-  const f = footer(ctx, sp.fuss, maxW, logo, st.align, 24 * s);
+  const f = footer(ctx, sp.fuss, maxW, logo.right, st.align, 24 * s, logo.left);
   if (f.h) out.push(f);
   return out;
 }
@@ -1073,7 +1093,7 @@ function qrBlock(ctx, st, pal, F, overPhoto) {
 const TFN = {
   klassisch(ctx, st, s, I, o) {
     const Z = TPL.klassisch.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
+    const logo = footMarks(I, getLogo(st, I.pal, Z, s), s);
     const imgH = Math.round((I.botY - I.topY) * st.splits[st.format] / 100);
     const pTop = I.topY + imgH + I.LI, pBot = Math.min(I.botY, I.H - I.safeB);
     const secs = panelSecs(ctx, st, sp, maxW, logo, s);
@@ -1088,7 +1108,7 @@ const TFN = {
   },
   cover(ctx, st, s, I, o) {
     const Z = TPL.cover.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
+    const logo = footMarks(I, getLogo(st, I.pal, Z, s), s);
     const aTop = I.topY + Math.max(I.M, I.safeT);
     const cBot = I.topY + Math.round((I.botY - I.topY) * st.splits[st.format] / 100);
     const pBot = Math.min(I.botY, I.H - I.safeB);
@@ -1104,7 +1124,7 @@ const TFN = {
   vollbild(ctx, st, s, I, o) {
     const Z = TPL.vollbild.sz, sp = specs(st, I.pal, Z, s), g = st.gap / 100;
     const cx = I.M, cw = W - 2 * I.M, ip = Math.round(clamp(I.M * 0.75, 28, 64)), maxW = cw - 2 * ip;
-    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
+    const logo = footMarks(I, getLogo(st, I.pal, Z, s), s);
     const secs = panelSecs(ctx, st, sp, maxW, logo, s);
     const n = secs.length, total = sumH(secs, I.SEP), pad = 30 * g * s;
     const cardH = n ? I.LI + total + 2 * n * pad : 0;
@@ -1122,7 +1142,7 @@ const TFN = {
   },
   typo(ctx, st, s, I, o) {
     const Z = TPL.typo.sz, sp = specs(st, I.pal, Z, s), maxW = W - 2 * I.M, g = st.gap / 100;
-    const logo = footMark(I, getLogo(st, I.pal, Z, s), s);
+    const logo = footMarks(I, getLogo(st, I.pal, Z, s), s);
     const qrY = I.topY + Math.max(I.M * 1.1, I.safeT);
     const cTop = I.qr && I.qrCorner ? qrY + I.qr.h + 36 * g * s : qrY;
     const cBot = Math.min(I.botY, I.H - I.safeB) - I.M * 0.9;
@@ -1130,7 +1150,7 @@ const TFN = {
     const bottom = [];
     if (sp.datum) { const d = stack(ctx, [{ spec:sp.datum }], maxW); if (d.h) bottom.push(d); }
     if (sp.text) { const t = stack(ctx, [{ spec:sp.text }], maxW); if (t.h) bottom.push(t); }
-    const f = footer(ctx, sp.fuss, maxW, logo, st.align, 26 * s);
+    const f = footer(ctx, sp.fuss, maxW, logo.right, st.align, 26 * s, logo.left);
     if (f.h) bottom.push(f);
     const pb = 28 * g * s, nb = bottom.length;
     const bH = bottom.reduce((a, x) => a + x.h, 0) + Math.max(0, nb - 1) * (2 * pb + I.SEP);
@@ -1160,6 +1180,7 @@ const TFN = {
 function composeInner(ctx, st, o, H) {
   const I = frame(st, H), fn = TFN[st.template];
   I.qrCorner = st.qrPos === 'ol' || st.qrPos === 'or';
+  I.qrLeft = st.qrPos === 'ul';
   I.qr = qrBlock(ctx, st, I.pal, I.F, I.qrCorner);
   let s = 1, plan = fn(ctx, st, s, I, o), i = 0;
   while (plan.overflow > 0.5 && i < 20) { s *= 0.965; plan = fn(ctx, st, s, I, o); i++; }
@@ -1421,10 +1442,14 @@ function syncUI() {
   updateExportLabel();
   updateQrHint();
 }
+const qrShown = () => state.qrPos !== 'aus' && !!qrMatrix(qrText(state.qrUrl));
+const logoCoupled = () => qrShown() && (state.qrPos === 'ul' || state.qrPos === 'fuss') && state.logo !== 'aus';
 const wantsPdf = () => FORMATS[state.format].print && state.a4Out === 'pdf';
 function updateExportLabel() { $('#exportBtn').textContent = wantsPdf() ? 'Als PDF speichern' : 'Als PNG speichern'; }
 function updateQrHint() {
-  const el = $('#qrHint'), raw = (state.qrUrl || '').trim();
+  const el = $('#qrHint'), raw = (state.qrUrl || '').trim(), coupled = logoCoupled();
+  $('#logoSizeBox').hidden = coupled;
+  $('#logoCoupled').hidden = !coupled;
   el.classList.remove('bad');
   if (!raw) { el.textContent = 'Sobald hier ein Link steht, erscheint der QR-Code im Bild.'; return; }
   const t = qrText(raw);
@@ -1437,6 +1462,7 @@ function updateQrHint() {
     const cm = QR_SIDE.print * state.qrSize / 100 * f * 21 / W;
     parts.push(`Gedruckt etwa ${cm.toFixed(1).replace('.', ',')} cm breit, lesbar aus rund ${Math.round(cm * 2) * 5} cm Abstand.`);
   }
+  if (coupled) parts.push('Das Logo wird genauso hoch.');
   el.textContent = parts.join(' ') || 'Der QR-Code ist im Bild.';
 }
 function set(k, v) { state[k] = v; syncUI(); requestRender(); }
