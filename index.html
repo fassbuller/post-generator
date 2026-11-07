@@ -197,7 +197,7 @@ select{appearance:auto}
     <img class="mast-logo" id="mastLogo" alt="Hennwack" width="40" height="38">
     <div>
       <h1>Post-Generator</h1>
-      <p>Posts für Instagram und A4-Plakate · Text eingeben, anpassen, speichern</p>
+      <p>Instagram-Posts, Plakate und Flyer · Text eingeben, anpassen, speichern</p>
     </div>
   </div>
 </header>
@@ -219,13 +219,45 @@ select{appearance:auto}
 
   <main class="controls" aria-label="Einstellungen">
     <div class="group">
-      <h2>Vorlage</h2>
-      <div class="tpls" id="tpls" role="radiogroup" aria-label="Vorlage"></div>
+      <h2>Medium</h2>
+      <div class="seg" id="mediumSeg" role="group" aria-label="Medium">
+        <button type="button" data-m="insta">Instagram</button>
+        <button type="button" data-m="plakat">Plakat</button>
+        <button type="button" data-m="flyer">Flyer</button>
+      </div>
+      <div class="seg" data-k="format" data-medium="insta" role="group" aria-label="Instagram-Format">
+        <button type="button" data-v="feed">Feed 4:5</button>
+        <button type="button" data-v="square">Quadrat</button>
+        <button type="button" data-v="story">Story</button>
+      </div>
+      <div class="seg" data-k="format" data-medium="plakat" role="group" aria-label="Plakatgröße">
+        <button type="button" data-v="a4">A4</button>
+        <button type="button" data-v="a3">A3</button>
+      </div>
+      <div class="seg" data-k="format" data-medium="flyer" role="group" aria-label="Flyergröße">
+        <button type="button" data-v="a5">A5 · 2 pro Blatt</button>
+        <button type="button" data-v="a6">A6 · 4 pro Blatt</button>
+      </div>
+      <label class="check" data-format="story"><input type="checkbox" id="safe" data-k="safe"> Bereich der Instagram-Bedienelemente zeigen (nur in der Vorschau)</label>
+      <label class="check" data-print><input type="checkbox" id="printMargin" data-k="printMargin"> 5 mm weißer Rand, damit der eigene Drucker nichts abschneidet</label>
+      <div class="field" data-print>
+        <span>Speichern als</span>
+        <div class="seg" data-k="a4Out" role="group" aria-label="Dateiformat zum Drucken">
+          <button type="button" data-v="pdf">PDF zum Drucken</button>
+          <button type="button" data-v="png">PNG-Bild</button>
+        </div>
+        <p class="hint" id="printHint"></p>
+      </div>
+    </div>
+
+    <div class="group">
+      <h2>Aufbau</h2>
+      <div class="tpls" id="tpls" role="radiogroup" aria-label="Aufbau"></div>
     </div>
 
     <div class="group">
       <h2>Bild</h2>
-      <p class="hint" data-only="typo">Die Plakat-Vorlage kommt ohne Bild aus. Wechsle die Vorlage, um ein Bild zu zeigen.</p>
+      <p class="hint" data-only="typo">„Nur Schrift“ kommt ohne Bild aus. Wähle einen anderen Aufbau, um ein Bild zu zeigen.</p>
       <div class="sub" data-only="klassisch,cover,vollbild">
         <div class="file-row">
           <button type="button" class="btn" id="pickBtn">Bild hochladen</button>
@@ -239,26 +271,6 @@ select{appearance:auto}
         </div>
         <div class="ranges" data-ranges="imgZoom,imgX,imgY"></div>
         <p class="hint">Am Rechner ziehst du den Ausschnitt direkt in der Vorschau, am Handy erst „Ausschnitt verschieben“ antippen. Bilder lassen sich auch in die Vorschau ziehen oder einfügen.</p>
-      </div>
-    </div>
-
-    <div class="group">
-      <h2>Format</h2>
-      <div class="seg" data-k="format" role="group" aria-label="Format">
-        <button type="button" data-v="feed">Feed 4:5</button>
-        <button type="button" data-v="square">Quadrat</button>
-        <button type="button" data-v="story">Story</button>
-        <button type="button" data-v="a4">A4-Plakat</button>
-      </div>
-      <label class="check" data-format="story"><input type="checkbox" id="safe" data-k="safe"> Bereich der Instagram-Bedienelemente zeigen (nur in der Vorschau)</label>
-      <label class="check" data-format="a4"><input type="checkbox" id="printMargin" data-k="printMargin"> 5 mm weißer Rand, damit der eigene Drucker nichts abschneidet</label>
-      <div class="field" data-format="a4">
-        <span>Speichern als</span>
-        <div class="seg" data-k="a4Out" role="group" aria-label="Dateiformat für das Plakat">
-          <button type="button" data-v="pdf">PDF zum Drucken</button>
-          <button type="button" data-v="png">PNG-Bild</button>
-        </div>
-        <p class="hint">A4 in 300 dpi (2480 × 3508 Pixel). Im Druckdialog „Tatsächliche Größe“ bzw. 100 % wählen.</p>
       </div>
     </div>
 
@@ -291,7 +303,7 @@ select{appearance:auto}
         <p class="hint">Kalender und Uhrzeit schreiben die Zeile neu, danach kannst du sie frei ändern.</p>
       </div>
       <label class="field"><span>Beschreibung</span><textarea id="text" data-k="text" rows="5"></textarea></label>
-      <label class="check"><input type="checkbox" id="showText"> Beschreibung in dieser Vorlage zeigen</label>
+      <label class="check"><input type="checkbox" id="showText"> Beschreibung in diesem Aufbau zeigen</label>
       <div class="field">
         <label for="fuss">Fußzeile</label>
         <textarea id="fuss" data-k="fuss" rows="2"></textarea>
@@ -398,7 +410,22 @@ const FORMATS = {
   feed:   { h: 1350, label: 'Feed 4:5' },
   square: { h: 1080, label: 'Quadrat 1:1' },
   story:  { h: 1920, label: 'Story 9:16', safeT: 250, safeB: 290 },
-  a4:     { h: 1528, label: 'A4-Plakat', print: true, exportW: 2480, exportH: 3508 }
+  /* Druckformate: alle im DIN-Seitenverhältnis 1 : √2, Flyer werden mehrfach auf ein A4-Blatt gesetzt */
+  a4: { h: 1528, medium:'plakat', print: { name:'A4', mm:[210, 297], dpi:300,
+        hint:'A4 in 300 dpi (2480 × 3508 Pixel). Im Druckdialog „Tatsächliche Größe“ bzw. 100 % wählen.' } },
+  a3: { h: 1528, medium:'plakat', print: { name:'A3', mm:[297, 420], dpi:250,
+        hint:'A3 in 250 dpi (2923 × 4134 Pixel) – reicht für ein Plakat. Im Copyshop am besten das PDF abgeben.' } },
+  a5: { h: 1528, medium:'flyer', print: { name:'A5', mm:[148.5, 210], show:'148 × 210 mm', dpi:300, sheet:{ mm:[297, 210], cols:2, rows:1 },
+        hint:'PDF: zwei Flyer auf einem A4-Blatt (quer) mit Schnittlinie. PNG: ein einzelner Flyer, z. B. für Messenger. Beim Drucken 100 % wählen.' } },
+  a6: { h: 1528, medium:'flyer', print: { name:'A6', mm:[105, 148.5], show:'105 × 148 mm', dpi:300, sheet:{ mm:[210, 297], cols:2, rows:2 },
+        hint:'PDF: vier Flyer auf einem A4-Blatt mit Schnittlinien. PNG: ein einzelner Flyer. Beim Drucken 100 % wählen. Auf A6 wird die Schrift klein – lieber wenig Text.' } }
+};
+for (const k of ['feed','square','story']) FORMATS[k].medium = 'insta';
+/* Jedes Medium bringt Voreinstellungen mit; Änderungen merkt es sich */
+const MEDIA = {
+  insta:  { formats:['feed','square','story'], defaults:{ qrPos:'aus' } },
+  plakat: { formats:['a4','a3'], defaults:{ qrPos:'ul', printMargin:true, a4Out:'pdf' } },
+  flyer:  { formats:['a5','a6'], defaults:{ qrPos:'ul', printMargin:true, a4Out:'pdf' } }
 };
 /* Seitenlänge des QR-Codes (ohne Rand) in px bei 1080 px Breite – auf dem Plakat größer */
 const QR_SIDE = { screen: 150, print: 180 };
@@ -433,15 +460,15 @@ const WEIGHT_NAMES = { 400:'Normal', 500:'Medium', 600:'Halbfett', 700:'Fett', 8
 
 /* Grundgrößen in px bei 1080 px Breite */
 const TPL = {
-  klassisch: { name:'Klassisch', hint:'Bild oben, Infos im Farbblock',       sz:{ dach:27, titel:62,  titelLh:1.06, unter:36, datum:46, text:32, fuss:29, logo:104 } },
+  klassisch: { name:'Bild + Text', hint:'Bild oben, Infos im Farbblock',       sz:{ dach:27, titel:62,  titelLh:1.06, unter:36, datum:46, text:32, fuss:29, logo:104 } },
   cover:     { name:'Buchcover', hint:'Cover freigestellt auf Farbe',        sz:{ dach:27, titel:64,  titelLh:1.06, unter:36, datum:44, text:31, fuss:29, logo:100 } },
-  vollbild:  { name:'Vollbild',  hint:'Foto randlos, Infos auf einem Etikett', sz:{ dach:26, titel:70,  titelLh:1.04, unter:34, datum:42, text:30, fuss:28, logo:96 } },
-  typo:      { name:'Plakat',    hint:'Nur Schrift, ohne Bild',              sz:{ dach:32, titel:140, titelLh:0.98, unter:44, datum:60, text:33, fuss:30, logo:124 } }
+  vollbild:  { name:'Foto',      hint:'Foto randlos, Infos auf einem Etikett', sz:{ dach:26, titel:70,  titelLh:1.04, unter:34, datum:42, text:30, fuss:28, logo:96 } },
+  typo:      { name:'Nur Schrift', hint:'Ohne Bild, große Schrift',              sz:{ dach:32, titel:140, titelLh:0.98, unter:44, datum:60, text:33, fuss:30, logo:124 } }
 };
 const TPL_ORDER = ['klassisch','cover','vollbild','typo'];
 
 const TUNE = { fontTitle:'inter', fontText:'inter', weightTitle:700, upper:true, sizeTitle:100, sizeDate:100, sizeText:100, lh:100,
-  align:'left', margin:60, gap:100, splits:{ feed:46, square:38, story:46, a4:46 }, logo:'ton', logoSize:100, stripe:'oben', lines:'an' };
+  align:'left', margin:60, gap:100, splits:{ feed:46, square:38, story:46, a4:46, a3:46, a5:46, a6:46 }, logo:'ton', logoSize:100, stripe:'oben', lines:'an' };
 const CONTENT = {
   dach:'Buchvorstellung', titel:'Code & Care', unter:'mit Tanja Kubes',
   datum:'Freitag, 23.10.2026 – 19:00 h', datumISO:'2026-10-23', zeit:'19:00',
@@ -462,7 +489,7 @@ const DEFAULTS = Object.assign({
   template:'klassisch', format:'feed', combo:'gruen', safe:true,
   showText:{ klassisch:true, cover:false, vollbild:false, typo:true },
   imgSource:'demo', imgFit:'cover', imgZoom:100, imgX:50, imgY:50,
-  printMargin:true, a4Out:'pdf', qrPos:'ul', qrSize:100, qrLabel:'Zur Anmeldung'
+  printMargin:true, a4Out:'pdf', qrPos:'aus', qrSize:100, qrLabel:'Zur Anmeldung'
 }, CONTENT, TUNE);
 
 const RANGES = {
@@ -501,6 +528,9 @@ if (!COMBOS.some(c => c.id === state.combo)) state.combo = DEFAULTS.combo;
 if (!FONTS[state.fontTitle]) state.fontTitle = TUNE.fontTitle;
 if (!FONTS[state.fontText]) state.fontText = TUNE.fontText;
 if (!['ul','fuss','ol','or','aus'].includes(state.qrPos)) state.qrPos = DEFAULTS.qrPos;
+const objOr = v => v && typeof v === 'object' && !Array.isArray(v) ? v : {};
+state.mediumPrefs = objOr(saved && saved.mediumPrefs);
+state.lastFmt = objOr(saved && saved.lastFmt);
 if (!['pdf','png'].includes(state.a4Out)) state.a4Out = DEFAULTS.a4Out;
 
 const img = { photo:null, name:'Beispielbild', edge:'#ffffff', demo:null, suggest:[], neutral:false };
@@ -1195,7 +1225,7 @@ function composeInner(ctx, st, o, H) {
   return { s, overflow: plan.overflow, H: I.H };
 }
 /* A4 mit Druckrand: Motiv verkleinert in einen weißen 5-mm-Rahmen setzen */
-const printInset = st => FORMATS[st.format].print && st.printMargin ? W * 5 / 210 : 0;
+const printInset = st => { const P = FORMATS[st.format].print; return P && st.printMargin ? W * 5 / P.mm[0] : 0; };
 function compose(ctx, st, o) {
   const F = FORMATS[st.format], m = printInset(st);
   if (!m) return composeInner(ctx, st, o, F.h);
@@ -1329,7 +1359,10 @@ function renderPreview() {
   else if (r.s < 0.995) { chip.dataset.state = 'warn'; chip.textContent = `Schrift automatisch auf ${Math.round(r.s * 100)} % verkleinert`; }
   else { chip.dataset.state = 'ok'; chip.textContent = 'Alles passt'; }
   const F = FORMATS[state.format];
-  $('#dims').textContent = F.print ? `A4 · 210 × 297 mm · 300 dpi` : `${F.label} · ${W} × ${H} px`;
+  const P = F.print;
+  $('#dims').textContent = P
+    ? `${P.name} · ${P.show || P.mm.join(' × ') + ' mm'} · ${P.sheet ? P.sheet.cols * P.sheet.rows + ' pro A4-Blatt' : P.dpi + ' dpi'}`
+    : `${F.label} · ${W} × ${H} px`;
 }
 function renderThumbs() {
   const K = 0.2, H = FORMATS[state.format].h;
@@ -1424,6 +1457,11 @@ function syncUI() {
   $('#showText').checked = !!state.showText[state.template];
   $$('[data-only]').forEach(el => { el.hidden = !el.dataset.only.split(',').includes(state.template); });
   $$('[data-format]').forEach(el => { el.hidden = el.dataset.format !== state.format; });
+  const F = FORMATS[state.format];
+  $$('[data-print]').forEach(el => { el.hidden = !F.print; });
+  $('#printHint').textContent = F.print ? F.print.hint : '';
+  $$('#mediumSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.m === F.medium)));
+  $$('.seg[data-medium]').forEach(el => { el.hidden = el.dataset.medium !== F.medium; });
   const hasImgTpl = state.template !== 'typo';
   $('#panBtn').hidden = !hasImgTpl;
   $('#stagePick').hidden = !hasImgTpl;
@@ -1459,7 +1497,7 @@ function updateQrHint() {
   if (state.qrPos === 'aus') parts.push('Der QR-Code ist gerade ausgeblendet.');
   else if (FORMATS[state.format].print) {
     const f = (W - 2 * printInset(state)) / W;
-    const cm = QR_SIDE.print * state.qrSize / 100 * f * 21 / W;
+    const cm = QR_SIDE.print * state.qrSize / 100 * f * FORMATS[state.format].print.mm[0] / 10 / W;
     parts.push(`Gedruckt etwa ${cm.toFixed(1).replace('.', ',')} cm breit, lesbar aus rund ${Math.round(cm * 2) * 5} cm Abstand.`);
   }
   if (coupled) parts.push('Das Logo wird genauso hoch.');
@@ -1566,6 +1604,17 @@ $$('.seg[data-k]').forEach(seg => seg.addEventListener('click', e => {
   const b = e.target.closest('button[data-v]');
   if (b) set(seg.dataset.k, b.dataset.v);
 }));
+/* Medium wechseln: Einstellungen des alten Mediums merken, die des neuen holen */
+function setMedium(m) {
+  const cur = FORMATS[state.format].medium;
+  if (!MEDIA[m] || m === cur) return;
+  state.mediumPrefs[cur] = Object.fromEntries(Object.keys(MEDIA[cur].defaults).map(k => [k, state[k]]));
+  state.lastFmt[cur] = state.format;
+  Object.assign(state, MEDIA[m].defaults, objOr(state.mediumPrefs[m]));
+  state.format = MEDIA[m].formats.includes(state.lastFmt[m]) ? state.lastFmt[m] : MEDIA[m].formats[0];
+  syncUI(); requestRender();
+}
+$('#mediumSeg').addEventListener('click', e => { const b = e.target.closest('button[data-m]'); if (b) setMedium(b.dataset.m); });
 $('#showText').addEventListener('change', e => { state.showText[state.template] = e.target.checked; requestRender(); });
 
 const WD = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
@@ -1605,7 +1654,7 @@ async function useFile(file) {
     if (img.suggest.length) state.combo = img.suggest[0];
     storeImage();
     syncUI(); requestRender();
-    if (state.template === 'typo') toast('Bild geladen – sichtbar in Klassisch, Buchcover und Vollbild');
+    if (state.template === 'typo') toast('Bild geladen – sichtbar in Bild + Text, Buchcover und Foto');
     else if (img.suggest.length) toast('Farbe passend zum Bild: ' + comboName(img.suggest[0]));
   } catch (e) {
     toast('Dieses Bild ließ sich nicht öffnen. Bitte als JPG oder PNG versuchen.');
@@ -1695,13 +1744,25 @@ async function saveStandalone(blob, name, previewBlob) {
     toast('Gespeichert: ' + name);
   } catch (e) { showImage(previewBlob || blob, name); }
 }
-/* Ein Bild mit JPEG-Inhalt als A4-Seite verpacken (PDF 1.4, ohne Bibliothek) */
-function makePdf(jpeg, pxW, pxH) {
+/* Das Motiv als JPEG auf eine Druckseite setzen (PDF 1.4, ohne Bibliothek); Flyer mehrfach pro Blatt mit Schnittlinien */
+function makePdf(jpeg, pxW, pxH, P, cuts) {
   const enc = new TextEncoder(), parts = [], off = [];
   let len = 0;
   const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
   const obj = (n, body) => { off[n] = len; push(`${n} 0 obj\n`); body(); push('\nendobj\n'); };
-  const PW = '595.28', PH = '841.89', content = `q ${PW} 0 0 ${PH} 0 0 cm /Im0 Do Q`;
+  const pt = mm => mm * 72 / 25.4, n2 = v => v.toFixed(2);
+  const sh = P.sheet || { mm:P.mm, cols:1, rows:1 };
+  const SW = pt(sh.mm[0]), SH = pt(sh.mm[1]), cw = SW / sh.cols, ch = SH / sh.rows;
+  const PW = n2(SW), PH = n2(SH);
+  let content = '';
+  for (let r = 0; r < sh.rows; r++) for (let c = 0; c < sh.cols; c++) {
+    content += `q ${n2(cw)} 0 0 ${n2(ch)} ${n2(c * cw)} ${n2(SH - (r + 1) * ch)} cm /Im0 Do Q\n`;
+  }
+  if (cuts && sh.cols * sh.rows > 1) {
+    content += '0.62 G 0.5 w [4 3] 0 d\n';
+    for (let c = 1; c < sh.cols; c++) content += `${n2(c * cw)} 0 m ${n2(c * cw)} ${PH} l S\n`;
+    for (let r = 1; r < sh.rows; r++) content += `0 ${n2(r * ch)} m ${PW} ${n2(r * ch)} l S\n`;
+  }
   push('%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n');
   obj(1, () => push('<< /Type /Catalog /Pages 2 0 R >>'));
   obj(2, () => push('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'));
@@ -1727,7 +1788,8 @@ function fileName(ext) {
 /* Endgröße: Instagram 1080 px breit, A4 in 300 dpi */
 async function renderBlob(type) {
   await ensureFonts(state);
-  const F = FORMATS[state.format], ew = F.exportW || W, eh = F.exportH || F.h;
+  const F = FORMATS[state.format], P = F.print;
+  const ew = P ? Math.round(P.mm[0] / 25.4 * P.dpi) : W, eh = P ? Math.round(P.mm[1] / 25.4 * P.dpi) : F.h;
   const c = document.createElement('canvas');
   c.width = ew; c.height = eh;
   const x = c.getContext('2d');
@@ -1758,7 +1820,7 @@ $('#exportBtn').addEventListener('click', async () => {
   try {
     if (wantsPdf()) {
       const { blob, ew, eh } = await renderBlob('image/jpeg');
-      const pdf = makePdf(new Uint8Array(await blob.arrayBuffer()), ew, eh);
+      const pdf = makePdf(new Uint8Array(await blob.arrayBuffer()), ew, eh, FORMATS[state.format].print, !!state.printMargin);
       await deliver(pdf, fileName('pdf'), blob);
     } else {
       const { blob } = await renderBlob('image/png');
